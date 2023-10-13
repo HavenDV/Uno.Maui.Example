@@ -1,0 +1,35 @@
+﻿name: Build and test
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows, macos]
+        dotnet: [
+          { version: 6.0.x, quality: ga },
+          { version: 7.0.x, quality: ga },
+          { version: 8.0.x, quality: preview }
+        ]
+        use-msbuild: [true, false]
+        exclude:
+          - os: macos
+            use-msbuild: true
+          
+    name: ${{ matrix.os }}/${{ matrix.dotnet.version }}/MSBuild(${{ matrix.use-msbuild }})
+    uses: HavenDV/workflows/.github/workflows/dotnet_build-test-publish.yml@main
+    with:
+      os: ${{ matrix.os }}-latest
+      dotnet-version: ${{ matrix.dotnet.version }}
+      dotnet-quality: ${{ matrix.dotnet.quality }}
+      use-msbuild: ${{ matrix.use-msbuild }}
+      custom-workload-macos: "https://raw.githubusercontent.com/HavenDV/Uno.Sdk/main/scripts/workload-install.sh"
+      custom-workload-windows: "https://raw.githubusercontent.com/HavenDV/Uno.Sdk/main/scripts/workload-install.ps1"
+      workloads: maui
+      project-path: /p:MtouchLink=SdkOnly # fix for "The linker step 'Setup' failed during processing: This version of Microsoft.MacCatalyst"
+      generate-build-number: false
+      conventional-commits-publish-conditions: false
